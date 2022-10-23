@@ -1,0 +1,76 @@
+<!-- @author benjamin_5 @date 2022/10/12-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="js/jQuery3.6.1.js"></script>
+</head>
+<body>
+<div class="modal-body form ">
+    <!-- 文件下载   -->
+    <form id="dialogForm" class="form-horizontal">
+        <div class="form-group">
+            <label class="control-label">下载进度:
+            </label>
+            <div>
+                <!--进度条-->
+                <div id="progress-body">
+                    <progress></progress>
+                    <div id="progress-bar">0%</div>
+                </div>
+            </div>
+        </div>
+        <button type="button" onclick="download()">下载</button>
+    </form>
+    <br>
+    <a href="index.html" id="a">上传文件</a>
+
+</div>
+
+</body>
+<script>
+    // 文件下载
+    function download() {
+        var xhr = new XMLHttpRequest();
+        //处理进度条的事件
+        xhr.addEventListener("progress", progressHandle, false);
+        //加载出错的事件
+        xhr.addEventListener("error", uploadFail, false);
+        xhr.open("POST","/file/download");
+        //设置响应类型
+        xhr.responseType = 'blob';
+        xhr.onload = function (e) {
+            if (this.status === 200) {
+                // 截取掉'attachment;filename='
+                var filename = xhr.getResponseHeader("Content-disposition").slice(20);
+                var blob = this.response;
+                var a = document.createElement('a');
+                var url = URL.createObjectURL(blob);
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+        }
+        xhr.send();
+    }
+
+    //进度条更新
+    function progressHandle(e) {
+        $('#progress-body progress').attr({
+            value: e.loaded,
+            max: e.total
+        });
+        var percent = (e.loaded / e.total * 100).toFixed(2);
+        $('#progress-body #progress-bar').html(percent + "%");
+    };
+
+    //上传出错处理函数
+    function uploadFail(e) {
+        alert("下载失败");
+    };
+</script>
+</html>
