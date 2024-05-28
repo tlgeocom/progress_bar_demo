@@ -102,7 +102,54 @@ public class FileController {
         }
         return new ResponseEntity<>("文件下载成功", HttpStatus.OK);
     }
+    /**
+     * 文件下载
+     * @return
+     */
+    @GetMapping("/download2")
+    @ResponseBody
+    public ResponseEntity<String> download2(HttpServletResponse response, @RequestParam String id) throws IOException {
+        // 获取资源文件存放路径，用于临时存放生成的excel文件
+        String path = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
+        File pathFile = new File(path);
+        File[] files = pathFile.listFiles();
+        if (ObjectUtils.isEmpty(files)) {
+            return new ResponseEntity<>("文件为空，请先上传文件", HttpStatus.OK);
+        }
+        InputStream inputStream = null;
+        ServletOutputStream ouputStream = null;
+        try {
+            for (File file : files) {
+                if(file.isDirectory()){
+                    continue;
+                }
+                inputStream = new FileInputStream(file);
+                response.setContentType("application/x-msdownload");
+                response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(file.getName(), "UTF-8"));
+                // 设置一个总长度，否则无法估算进度
+                response.setHeader("Content-Length",String.valueOf(file.length()));
+                ouputStream = response.getOutputStream();
+                byte b[] = new byte[1024];
+                int n;
+                while ((n = inputStream.read(b)) != -1) {
+                    ouputStream.write(b, 0, n);
+                }
+                ouputStream.flush();
+                break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
 
+        } finally {
+            if(inputStream != null){
+                inputStream.close();
+            }
+            if(ouputStream != null){
+                ouputStream.close();
+            }
+        }
+        return new ResponseEntity<>("文件下载成功", HttpStatus.OK);
+    }
     /**
      * 测试用
      * @param response
